@@ -49,7 +49,8 @@
 
         const PackageIcon = ({ size = 24, className = "" }) => (
             <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                <path d="m7.5 4.274 6.135-.316A2 2 0 0 1 15.672 5.1l.315 6.135a2 2 0 0 1-1.42 1.42l-6.135.315a2 2 0 0 1-1.42-1.42L6.08 5.695a2 2 0 0 1 1.42-1.42Z"/><path d="m2.84 8.766 1.42 1.42a2 2 0 0 0 1.42 1.42l6.135.315a2 2 0 0 0 1.42-1.42l.315-6.135a2 2 0 0 0-1.42-1.42l-6.135-.316a2 2 0 0 0-1.42 1.42L2.84 8.766Z"/><path d="m17.5 12.274 6.135-.316a2 2 0 0 1 1.42 1.42l.315 6.135a2 2 0 0 1-1.42 1.42l-6.135.315a2 2 0 0 1-1.42-1.42l-.315-6.135a2 2 0 0 1 1.42-1.42Z"/>
+                <path d="m7.5 4.274 6.135-.316A2 2 0 0 1 15.672 5.1l.315 6.135a2 2 0 0 1-1.42 1.42l-6.135.315a2 2 0 0 1-1.42-1.42L6.08 5.695a2 2 0 0 1 1.42-1.42Z"/><path d="m2.84 8.766 1.42 1.42a2 2 0
+                0 0 1.42 1.42l6.135.315a2 2 0 0 0 1.42-1.42l.315-6.135a2 2 0 0 0-1.42-1.42l-6.135-.316a2 2 0 0 0-1.42 1.42L2.84 8.766Z"/><path d="m17.5 12.274 6.135-.316a2 2 0 0 1 1.42 1.42l.315 6.135a2 2 0 0 1-1.42 1.42l-6.135.315a2 2 0 0 1-1.42-1.42l-.315-6.135a2 2 0 0 1 1.42-1.42Z"/>
             </svg>
         );
 
@@ -169,6 +170,7 @@
             const [name, setName] = useState('');
             const [quantity, setQuantity] = useState('');
             const [description, setDescription] = useState('');
+            const [imageUrl, setImageUrl] = useState(''); // New state for image URL
             const [errorMessage, setErrorMessage] = useState('');
 
             const handleSubmit = (e) => {
@@ -188,10 +190,12 @@
                     name: name.trim(),
                     quantity: parseInt(quantity),
                     description: description.trim(),
+                    imageUrl: imageUrl.trim(), // Include image URL
                 });
                 setName('');
                 setQuantity('');
                 setDescription('');
+                setImageUrl('');
             };
 
             return (
@@ -210,7 +214,7 @@
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
                                 className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500 shadow-sm"
-                                placeholder="Ej: Jeringa desechable, Mascarilla N95, Guantes de látex, Termómetro digital"
+                                placeholder="Ej: Jeringa desechable, Mascarilla N95"
                                 required
                             />
                         </div>
@@ -240,8 +244,21 @@
                             onChange={(e) => setDescription(e.target.value)}
                             rows="3"
                             className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500 shadow-sm"
-                            placeholder="Ej: Para uso general en consultorio, Repuesto para equipo de resonancia magnética, Consumible de laboratorio clínico"
+                            placeholder="Ej: Para uso general en consultorio, Repuesto para equipo de resonancia magnética"
                         ></textarea>
+                    </div>
+                    <div className="mb-4">
+                        <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-700 mb-1">
+                            URL de la Imagen (Opcional)
+                        </label>
+                        <input
+                            type="url"
+                            id="imageUrl"
+                            value={imageUrl}
+                            onChange={(e) => setImageUrl(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                            placeholder="Ej: https://placehold.co/150x100/A0C4FF/FFFFFF?text=Jeringa"
+                        />
                     </div>
                     {errorMessage && (
                         <p className="text-red-600 text-sm mb-4 bg-red-50 border border-red-200 p-3 rounded-md">
@@ -260,8 +277,24 @@
 
         // InventoryItem Component
         function InventoryItem({ item, onUpdateQuantity, onDeleteProduct }) {
+            // Default placeholder image if no URL is provided or if the URL fails to load
+            const defaultImageUrl = `https://placehold.co/150x100/E0E7FF/6366F1?text=Producto`;
+
             return (
                 <div className="bg-white border border-gray-200 rounded-lg shadow-md p-5 flex flex-col justify-between transform transition duration-300 hover:scale-105 hover:shadow-xl">
+                    {/* Image section */}
+                    <div className="mb-4 flex justify-center items-center h-32 overflow-hidden rounded-md bg-gray-100">
+                        <img
+                            src={item.imageUrl || defaultImageUrl}
+                            alt={item.name}
+                            className="max-w-full max-h-full object-contain rounded-md"
+                            onError={(e) => {
+                                e.target.onerror = null; // Prevent infinite loop
+                                e.target.src = defaultImageUrl; // Fallback to default image
+                            }}
+                        />
+                    </div>
+
                     <div>
                         <h3 className="text-xl font-semibold text-blue-800 mb-2 flex items-center gap-2">
                             <TagIcon size={20} /> {item.name}
