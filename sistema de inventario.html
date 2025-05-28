@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MEDSERV - Sistema de Inventario de Productos y Repuestos Médicos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { createRoot } = ReactDOM;
+
+        // Inline SVG Icons
+        const PlusCircleIcon = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/>
+            </svg>
+        );
+
+        const MinusCircleIcon = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <circle cx="12" cy="12" r="10"/><path d="M8 12h8"/>
+            </svg>
+        );
+
+        const Trash2Icon = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/>
+            </svg>
+        );
+
+        const SearchIcon = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+            </svg>
+        );
+
+        const PackageIcon = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <path d="m7.5 4.274 6.135-.316A2 2 0 0 1 15.672 5.1l.315 6.135a2 2 0 0 1-1.42 1.42l-6.135.315a2 2 0 0 1-1.42-1.42L6.08 5.695a2 2 0 0 1 1.42-1.42Z"/><path d="m2.84 8.766 1.42 1.42a2 2 0 0 0 1.42 1.42l6.135.315a2 2 0 0 0 1.42-1.42l.315-6.135a2 2 0 0 0-1.42-1.42l-6.135-.316a2 2 0 0 0-1.42 1.42L2.84 8.766Z"/><path d="m17.5 12.274 6.135-.316a2 2 0 0 1 1.42 1.42l.315 6.135a2 2 0 0 1-1.42 1.42l-6.135.315a2 2 0 0 1-1.42-1.42l-.315-6.135a2 2 0 0 1 1.42-1.42Z"/>
+            </svg>
+        );
+
+        const BoxIcon = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>
+            </svg>
+        );
+
+        const TagIcon = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414L12.586 22.414a2 2 0 0 0 2.828 0l7.172-7.172a2 2 0
+                0 0 0-2.828Z"/><path d="M7 7h.01"/>
+            </svg>
+        );
+
+
+        // Main App Component
+        function App() {
+            const [inventory, setInventory] = useState([]);
+            const [searchTerm, setSearchTerm] = useState('');
+            const [showAddForm, setShowAddForm] = useState(false);
+
+            // Load inventory from localStorage on initial render
+            useEffect(() => {
+                const storedInventory = localStorage.getItem('inventory');
+                if (storedInventory) {
+                    setInventory(JSON.parse(storedInventory));
+                }
+            }, []);
+
+            // Save inventory to localStorage whenever it changes
+            useEffect(() => {
+                localStorage.setItem('inventory', JSON.stringify(inventory));
+            }, [inventory]);
+
+            const addProduct = (product) => {
+                setInventory((prevInventory) => [...prevInventory, { ...product, id: Date.now() }]);
+                setShowAddForm(false); // Hide form after adding
+            };
+
+            const updateQuantity = (id, change) => {
+                setInventory((prevInventory) =>
+                    prevInventory.map((item) =>
+                        item.id === id ? { ...item, quantity: Math.max(0, item.quantity + change) } : item
+                    )
+                );
+            };
+
+            const deleteProduct = (id) => {
+                setInventory((prevInventory) => prevInventory.filter((item) => item.id !== id));
+            };
+
+            const filteredInventory = inventory.filter((item) =>
+                item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                item.description.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+
+            return (
+                <div className="min-h-screen bg-gray-50 p-4 font-inter text-gray-800">
+                    <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+                        <header className="bg-blue-600 text-white p-6 text-center rounded-t-xl">
+                            <h1 className="text-3xl font-bold flex items-center justify-center gap-3">
+                                <PackageIcon size={32} /> MEDSERV
+                            </h1>
+                            <p className="mt-1 text-blue-100">Sistema de Inventario de Productos y Repuestos Médicos</p>
+                        </header>
+
+                        <div className="p-6">
+                            <div className="flex flex-col sm:flex-row items-center justify-between mb-6 gap-4">
+                                <div className="relative w-full sm:w-2/3">
+                                    <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                                    <input
+                                        type="text"
+                                        placeholder="Buscar por nombre o descripción..."
+                                        className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-200 shadow-sm"
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                    />
+                                </div>
+                                <button
+                                    onClick={() => setShowAddForm(!showAddForm)}
+                                    className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 flex items-center justify-center gap-2"
+                                >
+                                    <PlusCircleIcon size={20} />
+                                    {showAddForm ? 'Cancelar' : 'Añadir Producto'}
+                                </button>
+                            </div>
+
+                            {showAddForm && <AddProductForm onAddProduct={addProduct} />}
+
+                            {filteredInventory.length === 0 && (
+                                <div className="text-center text-gray-500 py-10">
+                                    <p className="text-lg">No hay productos o repuestos en el inventario.</p>
+                                    <p className="text-md mt-2">¡Añade algunos para empezar!</p>
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {filteredInventory.map((item) => (
+                                    <InventoryItem
+                                        key={item.id}
+                                        item={item}
+                                        onUpdateQuantity={updateQuantity}
+                                        onDeleteProduct={deleteProduct}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // AddProductForm Component
+        function AddProductForm({ onAddProduct }) {
+            const [name, setName] = useState('');
+            const [quantity, setQuantity] = useState('');
+            const [description, setDescription] = useState('');
+            const [errorMessage, setErrorMessage] = useState('');
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                setErrorMessage(''); // Clear previous errors
+
+                if (!name.trim()) {
+                    setErrorMessage('El nombre del artículo es obligatorio.');
+                    return;
+                }
+                if (quantity === '' || isNaN(quantity) || parseInt(quantity) < 0) {
+                    setErrorMessage('La cantidad inicial debe ser un número válido y no negativo.');
+                    return;
+                }
+
+                onAddProduct({
+                    name: name.trim(),
+                    quantity: parseInt(quantity),
+                    description: description.trim(),
+                });
+                setName('');
+                setQuantity('');
+                setDescription('');
+            };
+
+            return (
+                <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-inner mb-6 border border-gray-100">
+                    <h2 className="text-xl font-semibold mb-4 text-blue-800 flex items-center gap-2">
+                        <BoxIcon size={24} /> Añadir Nuevo Artículo
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                                Nombre del Artículo
+                            </label>
+                            <input
+                                type="text"
+                                id="name"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                                placeholder="Ej: Jeringa desechable, Mascarilla N95, Guantes de látex, Termómetro digital"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">
+                                Cantidad Inicial
+                            </label>
+                            <input
+                                type="number"
+                                id="quantity"
+                                value={quantity}
+                                onChange={(e) => setQuantity(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                                placeholder="Ej: 100, 50"
+                                min="0"
+                                required
+                            />
+                        </div>
+                    </div>
+                    <div className="mb-4">
+                        <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                            Descripción (Opcional)
+                        </label>
+                        <textarea
+                            id="description"
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            rows="3"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                            placeholder="Ej: Para uso general en consultorio, Repuesto para equipo de resonancia magnética, Consumible de laboratorio clínico"
+                        ></textarea>
+                    </div>
+                    {errorMessage && (
+                        <p className="text-red-600 text-sm mb-4 bg-red-50 border border-red-200 p-3 rounded-md">
+                            {errorMessage}
+                        </p>
+                    )}
+                    <button
+                        type="submit"
+                        className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 flex items-center justify-center gap-2"
+                    >
+                        <PlusCircleIcon size={20} /> Añadir al Inventario
+                    </button>
+                </form>
+            );
+        }
+
+        // InventoryItem Component
+        function InventoryItem({ item, onUpdateQuantity, onDeleteProduct }) {
+            return (
+                <div className="bg-white border border-gray-200 rounded-lg shadow-md p-5 flex flex-col justify-between transform transition duration-300 hover:scale-105 hover:shadow-xl">
+                    <div>
+                        <h3 className="text-xl font-semibold text-blue-800 mb-2 flex items-center gap-2">
+                            <TagIcon size={20} /> {item.name}
+                        </h3>
+                        <p className="text-gray-600 text-sm mb-3">
+                            {item.description || 'Sin descripción.'}
+                        </p>
+                    </div>
+                    <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-100">
+                        <div className="flex items-center gap-2">
+                            <span className="text-lg font-bold text-gray-900">Cantidad: {item.quantity}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => onUpdateQuantity(item.id, -1)}
+                                className="p-2 rounded-full bg-red-100 text-red-600 hover:bg-red-200 transition duration-200"
+                                title="Disminuir Cantidad"
+                            >
+                                <MinusCircleIcon size={20} />
+                            </button>
+                            <button
+                                onClick={() => onUpdateQuantity(item.id, 1)}
+                                className="p-2 rounded-full bg-green-100 text-green-600 hover:bg-green-200 transition duration-200"
+                                title="Aumentar Cantidad"
+                            >
+                                <PlusCircleIcon size={20} />
+                            </button>
+                            <button
+                                onClick={() => onDeleteProduct(item.id)}
+                                className="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition duration-200"
+                                title="Eliminar Artículo"
+                            >
+                                <Trash2Icon size={20} />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Render the App component into the root div
+        const container = document.getElementById('root');
+        const root = createRoot(container);
+        root.render(<App />);
+    </script>
+</body>
+</html>
